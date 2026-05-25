@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trident OSS Renderer — Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 18px 32px;
+      border-bottom: 1px solid #1e2433;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+
+    header .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #1e3a5f;
+      color: #60a5fa;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      grid-template-rows: 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* --- Viewer pane --- */
+    #viewer-pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e2433;
+      overflow: hidden;
+    }
+
+    #viewer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid #1e2433;
+      background: #0d1018;
+      font-size: 0.78rem;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    #viewer-toolbar .hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #viewer-toolbar kbd {
+      background: #1e2433;
+      color: #94a3b8;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: inherit;
+      font-size: 0.72rem;
+    }
+
+    #viewer-container {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #viewer-container canvas {
+      display: block;
+    }
+
+    /* --- Source pane --- */
+    #source-pane {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #0d1018;
+    }
+
+    #source-tabs {
+      display: flex;
+      border-bottom: 1px solid #1e2433;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      font-size: 0.78rem;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s;
+      user-select: none;
+    }
+
+    .tab.active {
+      color: #60a5fa;
+      border-bottom-color: #60a5fa;
+    }
+
+    #source-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    pre {
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.65;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    pre .kw   { color: #60a5fa; }  /* keywords: container, node, text */
+    pre .id   { color: #a78bfa; }  /* identifiers */
+    pre .str  { color: #34d399; }  /* string values */
+    pre .conn { color: #f59e0b; }  /* connectors --> */
+    pre .cmt  { color: #475569; font-style: italic; }  /* comments */
+    pre .prop { color: #fb7185; }  /* property names like color:, label: */
+
+    /* --- Export bar --- */
+    #export-bar {
+      padding: 12px 16px;
+      border-top: 1px solid #1e2433;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    button {
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:active { opacity: 0.7; }
+
+    #btn-svg  { background: #1e3a5f; color: #60a5fa; }
+    #btn-png  { background: #1a3a2a; color: #34d399; }
+
+    /* --- Loading / error states --- */
+    #status {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #64748b;
+      pointer-events: none;
+    }
+
+    #status.error { color: #f87171; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Trident Renderer</h1>
+  <span class="badge">OSS</span>
+</header>
+
+<main>
+  <div id="viewer-pane">
+    <div id="viewer-toolbar">
+      <span style="color:#94a3b8; font-weight:500">Three-Tier Web Application</span>
+      <span class="hint">
+        <kbd>scroll</kbd> zoom &nbsp;·&nbsp; <kbd>drag</kbd> pan
+      </span>
+    </div>
+    <div id="viewer-container" style="position:relative">
+      <div id="status">Rendering…</div>
+    </div>
+  </div>
+
+  <div id="source-pane">
+    <div id="source-tabs">
+      <div class="tab active" data-tab="markup">Markup</div>
+      <div class="tab" data-tab="usage">Usage</div>
+    </div>
+    <div id="source-scroll">
+      <pre id="markup-view"></pre>
+      <pre id="usage-view" style="display:none"></pre>
+    </div>
+    <div id="export-bar">
+      <button id="btn-svg">↓ SVG</button>
+      <button id="btn-png">↓ PNG</button>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { Trident2DParserV2 } from './parser.js';
+import { renderToSVG, renderToPNG, mountViewer } from './renderer-oss.js';
+
+// ---------------------------------------------------------------------------
+// Diagram source
+// ---------------------------------------------------------------------------
+
+const MARKUP = `\
+trident
+
+%% Three-tier web application
+
+container frontend color:#4A90E2 label:"Frontend"
+container backend  color:#E74C3C label:"Backend"
+container data     color:#27AE60 label:"Data Layer"
+
+node webapp(cloud)[Web App]       in frontend at (150, 100)
+node mobile(smartphone)[Mobile]   in frontend at (310, 100)
+
+node api(server)[API Server]      in backend  at (150, 280)
+node cache(redis)[Redis Cache]    in backend  at (310, 280)
+node queue(kafka)[Message Queue]  in backend  at (470, 280)
+
+node db(postgres)[PostgreSQL]     in data     at (150, 460)
+node search(elasticsearch)[Search] in data    at (310, 460)
+node store(s3)[Object Store]      in data     at (470, 460)
+
+webapp  -->|HTTPS|    api
+mobile  -->|HTTPS|    api
+api     -->|Query|    db
+api     -->|Cache|    cache
+api     ..->|Index|   search
+api     ..->|Upload|  store
+api     -->|Enqueue|  queue
+
+text note1 "Read-only renderer\\nNo editing · No auth\\nOpen source" at (620, 240) style:stickyNote
+`;
+
+// ---------------------------------------------------------------------------
+// Syntax-highlight the markup for display
+// ---------------------------------------------------------------------------
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function highlight(src) {
+  // Tokenize: replace matches with placeholders, then HTML-escape the plain
+  // remainder, then splice the pre-escaped span HTML back in. This prevents
+  // any subsequent regex from corrupting already-inserted span tags.
+  const tokens = [];
+  function mark(content, cls) {
+    const id = tokens.length;
+    tokens.push(`<span class="${cls}">${escHtml(content)}</span>`);
+    return `\x00${id}\x00`;
+  }
+
+  let s = src;
+  s = s.replace(/(%%[^\n]*)/g,           m => mark(m, 'cmt'));
+  s = s.replace(/"[^"]*"/g,              m => mark(m, 'str'));
+  s = s.replace(/\b(color|outlineColor|textColor|label|style|width|height|fontSize|bold|italic|routingMode)\b(?=:)/g,
+                                         m => mark(m, 'prop'));
+  s = s.replace(/\b(container|node|text|trident|image|swimlane|sequence|click)\b/g,
+                                         m => mark(m, 'kw'));
+  s = s.replace(/(-->|==>|\.\.->|\.->|--|\.\.\.|\.\.|==)/g,
+                                         m => mark(m, 'conn'));
+
+  // HTML-escape everything that wasn't tokenised
+  s = escHtml(s);
+
+  // Restore token spans (placeholders are ASCII digits + \x00, safe from escaping)
+  return s.replace(/\x00(\d+)\x00/g, (_, i) => tokens[i]);
+}
+
+// ---------------------------------------------------------------------------
+// Usage snippet
+// ---------------------------------------------------------------------------
+
+const USAGE_SNIPPET = `\
+&lt;!-- 1. Load the modules --&gt;
+&lt;script type="module"&gt;
+import { Trident2DParserV2 } from './parser.js';
+import {
+  renderToSVG,
+  renderToPNG,
+  mountViewer,
+} from './renderer-oss.js';
+
+const parser = new Trident2DParserV2();
+
+// Render to SVG string
+const svg = await renderToSVG(markup, parser);
+
+// Mount an interactive canvas (zoom + pan)
+const { canvas } = await mountViewer(
+  document.getElementById('container'),
+  markup,
+  parser,
+);
+
+// Export as PNG Blob
+const blob = await renderToPNG(markup, parser, { scale: 2 });
+const url  = URL.createObjectURL(blob);
+&lt;/script&gt;
+`;
+
+// ---------------------------------------------------------------------------
+// Initialise
+// ---------------------------------------------------------------------------
+
+const parser = new Trident2DParserV2();
+const statusEl = document.getElementById('status');
+const container = document.getElementById('viewer-container');
+
+let viewerHandle = null;
+let currentSvg = null;
+
+async function init() {
+  try {
+    viewerHandle = await mountViewer(container, MARKUP, parser);
+    currentSvg = await renderToSVG(MARKUP, parser);
+    statusEl.style.display = 'none';
+  } catch (err) {
+    statusEl.textContent = 'Render error: ' + err.message;
+    statusEl.classList.add('error');
+    console.error(err);
+  }
+}
+
+init();
+
+// Populate source panel
+document.getElementById('markup-view').innerHTML = highlight(MARKUP);
+document.getElementById('usage-view').innerHTML = USAGE_SNIPPET;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    document.getElementById('markup-view').style.display = name === 'markup' ? '' : 'none';
+    document.getElementById('usage-view').style.display  = name === 'usage'  ? '' : 'none';
+  });
+});
+
+// Export buttons
+document.getElementById('btn-svg').addEventListener('click', () => {
+  if (!currentSvg) return;
+  const blob = new Blob([currentSvg], { type: 'image/svg+xml;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'diagram.svg';
+  a.click(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-png').addEventListener('click', async () => {
+  try {
+    const blob = await renderToPNG(MARKUP, parser, { scale: 2 });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'diagram.png';
+    a.click(); URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('PNG export failed:', err);
+  }
+});
+</script>
+
+</body>
+</html>
