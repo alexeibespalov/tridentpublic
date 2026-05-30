@@ -2,7 +2,7 @@
 
 Open-source core of [Trident](https://tridentchart.com) — a text-based diagramming tool.
 
-This repo contains the parser, serializer, and read-only renderer.
+This repo contains the parser, serializer, and read-only renderer. No auth, no collaboration, no dependencies.
 
 ---
 
