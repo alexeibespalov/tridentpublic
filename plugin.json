@@ -1,0 +1,12 @@
+{
+  "name": "trident",
+  "description": "Create and edit collaborative Trident architecture diagrams with any AI assistant. Includes the Trident MCP server connection and a skill that teaches the AI how to use the Trident DSL effectively.",
+  "version": "1.0.0",
+  "author": "Trident",
+  "license": "MIT",
+  "keywords": ["mcp", "diagram", "architecture", "collaborative", "trident"],
+  "components": {
+    "skills": ["skills/trident-use/SKILL.md"],
+    "mcp": ".mcp.json"
+  }
+}

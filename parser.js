@@ -693,7 +693,7 @@ export class Trident2DParserV2 {
 
         // Try new format with ID first
         // Regex handles both triple and single quotes for content
-        let match = line.match(/text\s+([\w-]+)\s+(?:"""([\s\S]+?)"""|"([\s\S]+?)")\s+at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
+        let match = line.match(/text\s+([\w-]+)\s+(?:"""([\s\S]*?)"""|"([\s\S]*?)")\s+at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
         let textId = null;
         let content, x, y;
 
@@ -705,7 +705,7 @@ export class Trident2DParserV2 {
             y = match[5];
         } else {
             // Try legacy format without ID
-            match = line.match(/text\s+(?:"""([\s\S]+?)"""|"([\s\S]+?)")\s+at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
+            match = line.match(/text\s+(?:"""([\s\S]*?)"""|"([\s\S]*?)")\s+at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
             if (!match) throw new Error('Invalid text annotation syntax');
             content = match[1] !== undefined ? match[1] : match[2];
             x = match[3];
