@@ -1,5 +1,5 @@
 ---
-name: trident-use
+name: trident
 description: Use when connected to the Trident collaborative diagramming MCP server. Covers tool ordering, real-time collaboration protocol, how to deliver live suggestions and guided explanations to human collaborators without mutating diagrams, grid layout rules, and ID enumeration before any edit.
 tools:
   - get_trident_spec
@@ -26,7 +26,7 @@ tools:
   - explain
 ---
 
-# Trident Use
+# Trident — Real-Time Collaborative Diagramming
 
 ## Overview
 
