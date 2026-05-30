@@ -1,0 +1,10 @@
+{
+  "name": "trident",
+  "version": "1.0.0",
+  "description": "Live collaborative diagramming — AI and humans work in the same document in real time, with cursor presence, non-destructive suggestions, and guided explanations.",
+  "mcpServers": {
+    "trident": {
+      "httpUrl": "https://mcp.tridentchart.com/mcp"
+    }
+  }
+}
