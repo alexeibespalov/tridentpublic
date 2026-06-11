@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "trident": {
+      "type": "http",
+      "url": "https://mcp.tridentchart.com/mcp"
+    }
+  }
+}
