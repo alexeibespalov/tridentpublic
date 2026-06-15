@@ -1059,6 +1059,20 @@ export class Trident2DParserV2 {
             return nodeWithCard;
         });
 
+        // Validate: standalone nodes (no container) must have at (x, y)
+        for (const node of nodes) {
+            if (!node.container && !node.positioned) {
+                this.errors.push({
+                    message: `Node "${node.id}" is not inside a container and has no position. Add \`at (x, y)\` or place it inside a container with \`in <container>\`.`
+                });
+            }
+        }
+
+        if (this.errors.length > 0) {
+            console.error('Parser errors:', this.errors);
+            return null;
+        }
+
         const annotations = this.annotations.map(ann => ({
             id: ann.id,
             content: ann.content,
