@@ -96,6 +96,9 @@ function serializeEdge(edge) {
 
     if (edge.color) line += ` color:${edge.color}`;
     if (edge.routingMode && edge.routingMode !== 'straight') line += ` routingMode:${edge.routingMode}`;
+    // Optional human-set orthogonal ports (drag-authored, editor-only feature).
+    if (edge.sourcePort) line += ` sourcePort:${edge.sourcePort}`;
+    if (edge.targetPort) line += ` targetPort:${edge.targetPort}`;
 
     return line;
 }

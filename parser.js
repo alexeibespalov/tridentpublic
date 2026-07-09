@@ -513,6 +513,15 @@ export class Trident2DParserV2 {
             const routingModeMatch = afterConnection.match(/routingMode:(\w+)/);
             if (routingModeMatch) edge.routingMode = routingModeMatch[1];
 
+            // Optional, human-set orthogonal edge ports (which side the edge
+            // leaves the source and enters the target). Set by dragging in the
+            // editor; not part of the authored/generated markup contract.
+            const VALID_PORTS = { top: 1, right: 1, bottom: 1, left: 1 };
+            const sourcePortMatch = afterConnection.match(/sourcePort:(\w+)/);
+            if (sourcePortMatch && VALID_PORTS[sourcePortMatch[1]]) edge.sourcePort = sourcePortMatch[1];
+            const targetPortMatch = afterConnection.match(/targetPort:(\w+)/);
+            if (targetPortMatch && VALID_PORTS[targetPortMatch[1]]) edge.targetPort = targetPortMatch[1];
+
             this.edges.push(edge);
             return edge;
         }
