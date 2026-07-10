@@ -1070,15 +1070,9 @@ export class Trident2DParserV2 {
             return nodeWithCard;
         });
 
-        // Validate: standalone nodes (no container) must have at (x, y)
-        for (const node of nodes) {
-            if (!node.container && !node.positioned) {
-                this.errors.push({
-                    message: `Node "${node.id}" is not inside a container and has no position. Add \`at (x, y)\` or place it inside a container with \`in <container>\`.`
-                });
-            }
-        }
-
+        // NOTE: Standalone nodes without `at (x, y)` are intentionally allowed.
+        // The renderer assigns fallback positions during layout and the resulting
+        // coordinates are written back through the standard markup-update loop.
         if (this.errors.length > 0) {
             console.error('Parser errors:', this.errors);
             return null;
