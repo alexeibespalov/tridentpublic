@@ -198,10 +198,24 @@ function generateDiagramSvg(graphData) {
     const dashAttr    = isDashed ? ' stroke-dasharray="6,3"' : '';
     const isLineOnly  = conn.type?.includes('line') && !conn.type?.includes('arrow');
     const markerAttr  = isLineOnly ? '' : ' marker-end="url(#arr)"';
+    // Wave (~~>) and bezier-routed edges render as a smooth curve rather than a
+    // straight segment so the style reads distinctly in the static renderer.
+    const isCurved    = conn.type?.includes('wave') || conn.routingMode === 'bezier';
 
-    parts.push(
-      `<line x1="${src.x}" y1="${src.y}" x2="${dst.x}" y2="${dst.y}" stroke="${strokeColor}" stroke-width="1.5"${dashAttr}${markerAttr}/>`,
-    );
+    if (isCurved) {
+      const dx = dst.x - src.x, dy = dst.y - src.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const off = Math.min(60, len * 0.2); // perpendicular arc height
+      const cxp = mx + (-dy / len) * off;
+      const cyp = my + (dx / len) * off;
+      parts.push(
+        `<path d="M${src.x},${src.y} Q${cxp},${cyp} ${dst.x},${dst.y}" fill="none" stroke="${strokeColor}" stroke-width="1.5"${dashAttr}${markerAttr}/>`,
+      );
+    } else {
+      parts.push(
+        `<line x1="${src.x}" y1="${src.y}" x2="${dst.x}" y2="${dst.y}" stroke="${strokeColor}" stroke-width="1.5"${dashAttr}${markerAttr}/>`,
+      );
+    }
     if (lbl) {
       parts.push(
         `<text x="${mx}" y="${my - 5}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${TEXT_MID}">${lbl}</text>`,

@@ -287,7 +287,7 @@ function highlight(src) {
                                          m => mark(m, 'prop'));
   s = s.replace(/\b(container|node|text|trident|image|swimlane|sequence|click)\b/g,
                                          m => mark(m, 'kw'));
-  s = s.replace(/(-->|==>|\.\.->|\.->|--|\.\.\.|\.\.|==)/g,
+  s = s.replace(/(-->|==>|~~>|\.\.->|\.->|--|\.\.\.|\.\.|==)/g,
                                          m => mark(m, 'conn'));
 
   // HTML-escape everything that wasn't tokenised

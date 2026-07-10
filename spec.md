@@ -86,7 +86,7 @@ connection_def ::= node_ref connector node_ref ( connection_property )* newline
 (* Connectors support TWO label syntaxes: pipe and embedded *)
 connector ::= labeled_connector | unlabeled_connector
 
-(* Pipe syntax: -->|Label| ==>|Label| ..->|Label| *)
+(* Pipe syntax: -->|Label| ==>|Label| ..->|Label| ~~>|Label| *)
 labeled_connector ::= unlabeled_connector "|" label_text "|"
 
 (* Embedded syntax: --Label--> ==Label==> ..Label..-> *)
@@ -102,6 +102,7 @@ unlabeled_connector ::= "--"      (* basic line *)
                       | "==>"     (* thick arrow *)
                       | "..->"    (* dashed arrow *)
                       | ".->"     (* dotted arrow *)
+                      | "~~>"     (* wave arrow (organic / flowing, bezier-routed) *)
                       | "..."     (* dashed line *)
                       | ".."      (* dotted line *)
 

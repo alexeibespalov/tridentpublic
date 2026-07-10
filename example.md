@@ -79,6 +79,9 @@ order_service ..->|Order Placed| message_queue
 message_queue ..->|Consume| notification_service
 notification_service ..->|Email| sendgrid
 
+%% Wave arrow — organic/flowing relationship
+user_service ~~>|Analytics Events| message_queue
+
 click order_service callback "Handles order creation and processing"
 click payment_service callback "Processes payments via Stripe"
 ```

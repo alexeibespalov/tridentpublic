@@ -47,6 +47,8 @@ text <id> "Text content" at (<x>, <y>) width:220 height:120 style:textBody fontS
 <source> ..-> <target>                   %% dashed arrow (async)
 <source> ..->|Label| <target>           %% dashed labeled arrow (pipe)
 <source> ..Label..-> <target>           %% dashed labeled arrow (embedded)
+<source> ~~> <target>                    %% wave arrow (organic / flowing)
+<source> ~~>|Label| <target>            %% wave labeled arrow (pipe)
 <source> -- <target>                     %% line
 <source> == <target>                     %% thick line
 
