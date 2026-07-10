@@ -435,6 +435,7 @@ export class Trident2DParserV2 {
 
             // Pipe labels: node --> |label| node
             { re: new RegExp(`^${nodeRefPart}\\s*==>\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '==>' },
+            { re: new RegExp(`^${nodeRefPart}\\s*~~>\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '~~>' },
             { re: new RegExp(`^${nodeRefPart}\\s*-->\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '-->' },
             { re: new RegExp(`^${nodeRefPart}\\s*\\.\\.->\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '..->' },
             { re: new RegExp(`^${nodeRefPart}\\s*-\\.->\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '-.->' },
@@ -448,7 +449,7 @@ export class Trident2DParserV2 {
             { re: new RegExp(`^${nodeRefPart}\\s*\\.\\.\\.([^.]+)\\.\\.\\.\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '...' },
 
             // No label
-            { re: new RegExp(`^${nodeRefPart}\\s*(==>|-->|\\.\\.->|-\\.->|\\.->|==|--|\\.\\.\\.|\\.\\.|-.-)\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, connector: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 } }
+            { re: new RegExp(`^${nodeRefPart}\\s*(==>|-->|\\.\\.->|-\\.->|\\.->|~~>|==|--|\\.\\.\\.|\\.\\.|-.-)\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, connector: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 } }
         ];
 
         for (const pattern of patterns) {
@@ -580,7 +581,8 @@ export class Trident2DParserV2 {
             '...': 'dashed_line',
             '..': 'dotted_line',
             '.->': 'dotted_arrow',
-            '-.-': 'dashed_line'
+            '-.-': 'dashed_line',
+            '~~>': 'wave'
         };
         return typeMap[connector] || 'line';
     }
@@ -588,7 +590,7 @@ export class Trident2DParserV2 {
     isConnection(line) {
         // Must start with an identifier (word char) — prevents markdown `---`, `##`, prose from matching
         if (!/^\s*\w/.test(line)) return false;
-        return /-->|==>|\.\.->|-\.->|\.->|==|--|\.\.|\.\.\.|-.-|\|/.test(line) &&
+        return /-->|==>|\.\.->|-\.->|\.->|~~>|==|--|\.\.|\.\.\.|-.-|\|/.test(line) &&
             !line.startsWith('click ') &&
             !line.startsWith('node ') &&
             !line.startsWith('container ') &&

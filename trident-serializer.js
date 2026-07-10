@@ -10,7 +10,8 @@ const EDGE_TYPE_TO_CONNECTOR = {
     dotted_arrow: '.->',
     dotted_line: '..',
     thick: '==>',
-    dashed: '..->'
+    dashed: '..->',
+    wave: '~~>'
 };
 
 function hasOwnValue(object, key) {
