@@ -540,6 +540,51 @@ verify --> db
 - Participant columns divide the width evenly — e.g. 900px wide, 4 participants → columns at x = 112, 337, 562, 787 from left edge (add graphic x - width/2 offset)
 - Nodes and connections work normally; the sequence diagram provides the visual frame
 
+### C4 Container Diagram Syntax
+
+Render a C4 model **Container diagram** (C4 level 2). There is **no dedicated `c4` keyword** — a C4 diagram is composed from standard `container`, `node`, and connection syntax following a fixed set of conventions. Reproduce these conventions exactly so the output matches Trident's built-in C4 template.
+
+**Conventions:**
+
+1. **System boundary** — a normal `container` that auto-sizes around the in-scope containers placed inside it. Give it a soft fill, a muted outline, and a `[Software System]` suffix on the label. Declare it **before** the nodes that sit `in` it:
+   ```trident
+   container ib color:#F2F6FA outlineColor:#5B7A99 label:"Internet Banking System [Software System]"
+   ```
+
+2. **People (actors)** — a `node` with a person emoji, placed *outside and above* the boundary. Three label lines separated by `<br/>`: name, `«Person»` stereotype, one-line description:
+   ```trident
+   node customer(👤)[Personal Banking Customer<br/>«Person»<br/>A customer of the bank, with personal bank accounts.] at (400, -40) width:160 color:#08427B textColor:#FFFFFF
+   ```
+
+3. **In-scope containers** — a `node ... in <boundary>` with an icon, a `«Container: technology»` stereotype line, and a description:
+   ```trident
+   node api(⚙️)[API Application<br/>«Container: Java and Spring MVC»<br/>Provides banking functionality via a JSON/HTTPS API.] in ib at (400, 290) width:160 color:#438DD5 textColor:#FFFFFF
+   ```
+
+4. **External software systems** — grey `node`s placed *outside* the boundary, stereotype `«Software System»`:
+   ```trident
+   node mainframe(🏦)[Mainframe Banking System<br/>«Software System»<br/>Stores core banking info about customers and accounts.] at (830, 450) width:160 color:#999999 textColor:#FFFFFF
+   ```
+
+5. **Relationships** — labelled connections with the transport **technology in square brackets** at the end of the label:
+   ```trident
+   customer -->|Visits bigbank.com/ib [HTTPS]| web
+   spa -->|Makes API calls [JSON/HTTPS]| api
+   api -->|Reads from & writes to [JDBC]| db
+   ```
+
+**Official C4 palette (use these exact colours):**
+- Person: `color:#08427B`
+- Container: `color:#438DD5`
+- External system: `color:#999999`
+- Boundary: `color:#F2F6FA outlineColor:#5B7A99`
+- Every element uses `textColor:#FFFFFF` and `width:160`
+
+**Layout tips:**
+- People sit above the boundary; external systems sit to the right, outside it.
+- Space containers ~200px apart horizontally and ~160px vertically.
+- The boundary container auto-sizes — you don't set its width/height; just place the `in`-scope nodes and it wraps them.
+
 ### Available Icons (3,400+ via fuzzy matching)
 
 Instead of memorising IDs, use these naming conventions — the system fuzzy-matches, so logical guesses almost always work.
