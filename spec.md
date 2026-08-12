@@ -86,7 +86,7 @@ connection_def ::= node_ref connector node_ref ( connection_property )* newline
 (* Connectors support TWO label syntaxes: pipe and embedded *)
 connector ::= labeled_connector | unlabeled_connector
 
-(* Pipe syntax: -->|Label| ==>|Label| ..->|Label| ~~>|Label| *)
+(* Pipe syntax: --> |Label| ==> |Label| ..-> |Label| ~~> |Label| *)
 labeled_connector ::= unlabeled_connector "|" label_text "|"
 
 (* Embedded syntax: --Label--> ==Label==> ..Label..-> *)
@@ -383,10 +383,10 @@ Connections show relationships and data flow between nodes.
 
 **Option 1: Pipe Syntax:**
 ```trident
-webapp -->|HTTPS| api
-api -->|SQL Query| database
-cache ..->|Invalidate| api
-payment ==>|Transaction| processor
+webapp --> |HTTPS| api
+api --> |SQL Query| database
+cache ..-> |Invalidate| api
+payment ==> |Transaction| processor
 ```
 
 **Option 2: Embedded Syntax:**
@@ -397,7 +397,8 @@ cache ..Invalidate..-> api
 payment ==Transaction==> processor
 ```
 
-Both syntaxes produce identical results. Use whichever you prefer.
+Both syntaxes produce identical results; the editor rewrites either as `a --> |Label| b`.
+The arrowless connectors (`--`, `==`, `...`, `..`) have no embedded form — use pipes.
 
 **Examples:**
 ```trident
@@ -406,9 +407,9 @@ webapp -- api
 api == database
 
 %% Labeled connections (pipe syntax)
-webapp -->|HTTPS| api
-api -->|SQL Query| database
-cache ..->|Invalidate| api
+webapp --> |HTTPS| api
+api --> |SQL Query| database
+cache ..-> |Invalidate| api
 
 %% Labeled connections (embedded syntax)
 webapp --HTTPS--> api
@@ -416,11 +417,11 @@ api --SQL Query--> database
 cache ..Invalidate..-> api
 
 %% Critical flows
-payment ==>|Transaction| processor
+payment ==> |Transaction| processor
 
 %% Connections with routing modes
-api -->|Query| cache routingMode:bezier
-frontend -->|HTTPS| api routingMode:orthogonal
+api --> |Query| cache routingMode:bezier
+frontend --> |HTTPS| api routingMode:orthogonal
 ```
 
 **Properties:**
@@ -651,7 +652,7 @@ start[Start]
 check{Is Valid?}
 process[Process Data]
 start --> check
-check -->|Yes| process
+check --> |Yes| process
 ```
 
 **With icons:**
@@ -660,7 +661,7 @@ A[server: API Server]
 B[postgres: Database]
 gate{Authenticated?}
 A --> gate
-gate -->|Yes| B
+gate --> |Yes| B
 ```
 
 **With positioning:**
@@ -737,7 +738,7 @@ click C callback "PostgreSQL database"
   - Container to Node
   - Container to Container
 - Arrow connectors (`-->`, `==>`, `..->`, `.->`) support animated flow
-- Labels support TWO syntaxes: pipe `-->|Label|` or embedded `--Label-->`
+- Labels support TWO syntaxes: pipe `--> |Label|` or embedded `--Label-->`
 - Both label syntaxes are equivalent and produce identical results
 - Default connection colors are semantic-based
 - Routing modes control edge rendering:
@@ -866,8 +867,8 @@ admin --> api
 
 %% Authentication flow
 api --> auth_check
-auth_check -->|Yes| catalog
-auth_check -->|No| auth
+auth_check --> |Yes| catalog
+auth_check --> |No| auth
 auth --> user_db
 
 %% Catalog operations
@@ -877,11 +878,11 @@ catalog --> cache
 %% Payment flow with decisions
 catalog --> payment
 payment --> payment_valid
-payment_valid -->|Valid| stripe
-payment_valid -->|Invalid| sendgrid
+payment_valid --> |Valid| stripe
+payment_valid --> |Invalid| sendgrid
 stripe --> inventory_check
-inventory_check -->|Yes| order_db
-inventory_check -->|No| sendgrid
+inventory_check --> |Yes| order_db
+inventory_check --> |No| sendgrid
 
 %% Notification paths
 order_db ==> sendgrid
@@ -903,13 +904,13 @@ failure[Login Failed] at (400, 400)
 
 start --> input
 input --> validate
-validate -->|Yes| check_2fa
-validate -->|No| failure
-check_2fa -->|Yes| verify_2fa
-check_2fa -->|No| success
+validate --> |Yes| check_2fa
+validate --> |No| failure
+check_2fa --> |Yes| verify_2fa
+check_2fa --> |No| success
 verify_2fa --> code_valid
-code_valid -->|Yes| success
-code_valid -->|No| failure
+code_valid --> |Yes| success
+code_valid --> |No| failure
 ```
 
 ---

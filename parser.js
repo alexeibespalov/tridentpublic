@@ -441,6 +441,17 @@ export class Trident2DParserV2 {
             { re: new RegExp(`^${nodeRefPart}\\s*-\\.->\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '-.->' },
             { re: new RegExp(`^${nodeRefPart}\\s*\\.->\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '.->' },
 
+            // Pipe labels on the LINE connectors (no arrowhead): node -- |label| node.
+            // The spec defines `labeled_connector ::= unlabeled_connector "|" label "|"`
+            // for every connector, and the serializer emits the pipe form for all of
+            // them — so these must parse or a labelled line breaks on round-trip.
+            // Longest-first: `...` before `..`, and both arrow forms above already
+            // claimed `-->` / `==>` / `..->`, so `--` / `==` / `..` can't steal them.
+            { re: new RegExp(`^${nodeRefPart}\\s*\\.\\.\\.\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '...' },
+            { re: new RegExp(`^${nodeRefPart}\\s*\\.\\.\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '..' },
+            { re: new RegExp(`^${nodeRefPart}\\s*==\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '==' },
+            { re: new RegExp(`^${nodeRefPart}\\s*--\\s*\\|([^|]*)\\|\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '--' },
+
             // Embedded labels: node --label--> node
             { re: new RegExp(`^${nodeRefPart}\\s*==([^=]+)==>\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '==>' },
             { re: new RegExp(`^${nodeRefPart}\\s*--([^->]+)-->\\s*${nodeRefPart}`), groups: { src: 1, srcBrackets: 2, srcLabel: 3, label: 4, tgt: 5, tgtBrackets: 6, tgtLabel: 7 }, connector: '-->' },

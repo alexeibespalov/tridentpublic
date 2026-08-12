@@ -37,18 +37,15 @@ text <id> "Text content" at (<x>, <y>) width:150 textColor:#000000
 text "Text content" at (<x>, <y>) width:200           %% auto-generated ID
 text <id> "Text content" at (<x>, <y>) width:220 height:120 style:textBody fontSize:11 bold:true
 
-%% Define connections (both syntaxes supported)
+%% Define connections
 <source> --> <target>                    %% arrow
-<source> -->|Label| <target>            %% labeled arrow (pipe syntax)
-<source> --Label--> <target>            %% labeled arrow (embedded syntax)
+<source> --> |Label| <target>           %% labeled arrow
 <source> ==> <target>                    %% thick arrow (critical)
-<source> ==>|Label| <target>            %% thick labeled arrow (pipe)
-<source> ==Label==> <target>            %% thick labeled arrow (embedded)
+<source> ==> |Label| <target>           %% thick labeled arrow
 <source> ..-> <target>                   %% dashed arrow (async)
-<source> ..->|Label| <target>           %% dashed labeled arrow (pipe)
-<source> ..Label..-> <target>           %% dashed labeled arrow (embedded)
+<source> ..-> |Label| <target>          %% dashed labeled arrow
 <source> ~~> <target>                    %% wave arrow (organic / flowing)
-<source> ~~>|Label| <target>            %% wave labeled arrow (pipe)
+<source> ~~> |Label| <target>           %% wave labeled arrow
 <source> -- <target>                     %% line
 <source> == <target>                     %% thick line
 
@@ -209,23 +206,13 @@ This is useful for showing high-level traffic flow between architectural layers 
 
 ### 6. **Connection Labels**
 
-Both syntaxes are supported for labels:
+Put the label between pipes, after the connector:
 
-**Pipe syntax:**
 ```trident
-webapp -->|HTTPS| api
-api -->|SQL Query| database
-cache ..->|Invalidate| api
+webapp --> |HTTPS| api
+api --> |SQL Query| database
+cache ..-> |Invalidate| api
 ```
-
-**Embedded syntax (alternative):**
-```trident
-webapp --HTTPS--> api
-api --SQL Query--> database
-cache ..Invalidate..-> api
-```
-
-Both produce identical results. Use whichever you prefer.
 
 ### 7. **Edge Routing Modes**
 
@@ -233,7 +220,7 @@ Connections support different routing algorithms to control how edges are render
 
 **Syntax:**
 ```trident
-<source> -->|Label| <target> routingMode:bezier
+<source> --> |Label| <target> routingMode:bezier
 <source> --> <target> routingMode:orthogonal
 ```
 
@@ -249,13 +236,13 @@ Connections support different routing algorithms to control how edges are render
 api --> db
 
 %% Bezier curved connection
-api -->|Query| cache routingMode:bezier
+api --> |Query| cache routingMode:bezier
 
 %% Orthogonal right-angle connection
-frontend -->|HTTPS| api routingMode:orthogonal
+frontend --> |HTTPS| api routingMode:orthogonal
 
 %% Critical flow with orthogonal routing
-payment ==>|Transaction| processor routingMode:orthogonal
+payment ==> |Transaction| processor routingMode:orthogonal
 ```
 
 **When to use:**
@@ -402,13 +389,9 @@ worker[lambda: Background Worker] in backend
 - `--` - Line (no arrow)
 - `==` - Thick line
 
-**Label syntax (both work identically):**
+**Label syntax:**
 ```trident
-%% Pipe syntax
-source -->|Label Text| target
-
-%% Embedded syntax
-source --Label Text--> target
+source --> |Label Text| target
 ```
 
 **Properties:**
@@ -421,23 +404,20 @@ source --Label Text--> target
 %% Simple arrow
 api --> database
 
-%% Labeled arrow (pipe syntax)
-api -->|GraphQL Query| database
-
-%% Labeled arrow (embedded syntax)
-api --GraphQL Query--> database
+%% Labeled arrow
+api --> |GraphQL Query| database
 
 %% Critical path
-payment ==>|Process Transaction| processor
+payment ==> |Process Transaction| processor
 
 %% Async communication
-service ..->|Event Published| queue
+service ..-> |Event Published| queue
 
 %% Bezier routing for aesthetics
-frontend -->|REST API| backend routingMode:bezier
+frontend --> |REST API| backend routingMode:bezier
 
 %% Orthogonal routing for technical diagrams
-sensor -->|TCP/IP| controller routingMode:orthogonal
+sensor --> |TCP/IP| controller routingMode:orthogonal
 ```
 
 ### Card/Tooltip Syntax
@@ -542,35 +522,35 @@ verify --> db
 
 ### C4 Container Diagram Syntax
 
-Render a C4 model **Container diagram** (C4 level 2). There is **no dedicated `c4` keyword** — a C4 diagram is composed from standard `container`, `node`, and connection syntax following a fixed set of conventions. Reproduce these conventions exactly so the output matches Trident's built-in C4 template.
+Render a C4 model **Container diagram** (C4 level 2). There is **no dedicated `c4` keyword** — a C4 diagram is composed from standard `container`, `node`, and connection syntax following a fixed set of conventions. Reproduce these conventions so the output matches Trident's built-in C4 template.
 
 **Conventions:**
 
 1. **System boundary** — a normal `container` that auto-sizes around the in-scope containers placed inside it. Give it a soft fill, a muted outline, and a `[Software System]` suffix on the label. Declare it **before** the nodes that sit `in` it:
    ```trident
-   container ib color:#F2F6FA outlineColor:#5B7A99 label:"Internet Banking System [Software System]"
+   container ib label:"Internet Banking System [Software System]" color:#F2F6FA outlineColor:#5B7A99
    ```
 
 2. **People (actors)** — a `node` with a person emoji, placed *outside and above* the boundary. Three label lines separated by `<br/>`: name, `«Person»` stereotype, one-line description:
    ```trident
-   node customer(👤)[Personal Banking Customer<br/>«Person»<br/>A customer of the bank, with personal bank accounts.] at (400, -40) width:160 color:#08427B textColor:#FFFFFF
+   node customer(👤)[Personal Banking Customer<br/>«Person»<br/>A customer of the bank, with personal bank accounts.] at (400, -40) color:#08427B textColor:#FFFFFF
    ```
 
 3. **In-scope containers** — a `node ... in <boundary>` with an icon, a `«Container: technology»` stereotype line, and a description:
    ```trident
-   node api(⚙️)[API Application<br/>«Container: Java and Spring MVC»<br/>Provides banking functionality via a JSON/HTTPS API.] in ib at (400, 290) width:160 color:#438DD5 textColor:#FFFFFF
+   node api(⚙️)[API Application<br/>«Container: Java and Spring MVC»<br/>Provides banking functionality via a JSON/HTTPS API.] in ib at (400, 290) color:#438DD5 textColor:#FFFFFF
    ```
 
 4. **External software systems** — grey `node`s placed *outside* the boundary, stereotype `«Software System»`:
    ```trident
-   node mainframe(🏦)[Mainframe Banking System<br/>«Software System»<br/>Stores core banking info about customers and accounts.] at (830, 450) width:160 color:#999999 textColor:#FFFFFF
+   node mainframe(🏦)[Mainframe Banking System<br/>«Software System»<br/>Stores core banking info about customers and accounts.] at (830, 450) color:#999999 textColor:#FFFFFF
    ```
 
 5. **Relationships** — labelled connections with the transport **technology in square brackets** at the end of the label:
    ```trident
-   customer -->|Visits bigbank.com/ib [HTTPS]| web
-   spa -->|Makes API calls [JSON/HTTPS]| api
-   api -->|Reads from & writes to [JDBC]| db
+   customer --> |Visits bigbank.com/ib [HTTPS]| web
+   spa --> |Makes API calls [JSON/HTTPS]| api
+   api --> |Reads from & writes to [JDBC]| db
    ```
 
 **Official C4 palette (use these exact colours):**
@@ -578,7 +558,7 @@ Render a C4 model **Container diagram** (C4 level 2). There is **no dedicated `c
 - Container: `color:#438DD5`
 - External system: `color:#999999`
 - Boundary: `color:#F2F6FA outlineColor:#5B7A99`
-- Every element uses `textColor:#FFFFFF` and `width:160`
+- Every element uses `textColor:#FFFFFF`
 
 **Layout tips:**
 - People sit above the boundary; external systems sit to the right, outside it.
@@ -713,11 +693,11 @@ node ... in <layer2> at (x, 280)      %% Middle of screen
 node ... in <layer3> at (x, 460)      %% Bottom of screen
 
 %% Define connections
-node1 -->|Label| node2
+node1 --> |Label| node2
 ```
 
 **Step 5: Add labels and cards**
-- Use `-->|Label|` or `--Label-->` for connection labels (both work)
+- Use `--> |Label|` for connection labels
 - Use `click nodeId callback "text"` to add information cards/tooltips to nodes
 
 ---
@@ -746,11 +726,11 @@ node posts_db(dynamodb)[DynamoDB] in storage at (200, 460)
 node media_bucket(s3)[S3 Bucket] in storage at (400, 460)
 
 %% Connections
-webapp -->|HTTPS| cdn
-cdn -->|Route| api
-api -->|Authenticate| auth
-api -->|Query Posts| posts_db
-webapp -->|Upload| media_bucket
+webapp --> |HTTPS| cdn
+cdn --> |Route| api
+api --> |Authenticate| auth
+api --> |Query Posts| posts_db
+webapp --> |Upload| media_bucket
 
 %% Cards for additional context
 click api callback "AWS Lambda function handling blog API requests"
@@ -773,12 +753,12 @@ api[server: API Server] in app at (300, 100)
 redis[redis: Redis Cache] in cache at (150, 280)
 db[postgres: PostgreSQL] in db at (300, 460)
 
-api -->|Check Cache| redis
-redis -->|Cache MISS| api
-api -->|Query| db
-db -->|Return Data| api
-api -->|Set Cache| redis
-redis -->|Cache HIT| api
+api --> |Check Cache| redis
+redis --> |Cache MISS| api
+api --> |Query| db
+db --> |Return Data| api
+api --> |Set Cache| redis
+redis --> |Cache HIT| api
 
 click redis callback "Redis cache implementing cache-aside pattern"
 click api callback "API server checking cache before database"
@@ -796,9 +776,9 @@ node api(server)[API Server] in app at (300, 100)
 node redis(redis)[Redis Cache] in cache at (150, 280)
 node db(postgres)[PostgreSQL] in db at (300, 460)
 
-api -->|Check Cache| redis
-redis -->|Cache MISS| api
-api -->|Query| db
+api --> |Check Cache| redis
+redis --> |Cache MISS| api
+api --> |Query| db
 ```
 
 Both produce identical diagrams. Choose the syntax you prefer!
@@ -828,16 +808,16 @@ node db(mongodb)[MongoDB Atlas] in cloud at (300, 460)
 node cdn(cloudflare)[Cloudflare CDN] in cloud at (450, 460)
 
 %% Connections showing MACH flow
-web -->|GraphQL| gateway
-mobile -->|REST| gateway
-pwa -->|GraphQL| gateway
+web --> |GraphQL| gateway
+mobile --> |REST| gateway
+pwa --> |GraphQL| gateway
 
-gateway -->|Route| commerce
-gateway -->|Route| content
+gateway --> |Route| commerce
+gateway --> |Route| content
 
-commerce -->|Query| db
-content -->|Fetch| cms
-web -->|Static Assets| cdn
+commerce --> |Query| db
+content --> |Fetch| cms
+web --> |Static Assets| cdn
 
 click gateway callback "API Gateway routing requests to microservices"
 click commerce callback "Commerce microservice handling product catalog and cart"
@@ -894,7 +874,7 @@ worker --> queue
 5. **⚠️ CRITICAL: Small Y = Top of screen, Large Y = Bottom of screen**
 6. **Y-axis: Frontend at small Y (100-140), Infrastructure at large Y (460-500)**
 7. **Horizontal spacing: 100-200 units apart; Vertical spacing: 160-200 units between layers**
-8. **Connection labels: `-->|Label|` (pipe) or `--Label-->` (embedded)**
+8. **Connection labels: `--> |Label|`**
 9. **Node syntax: `node id(icon)[label]` OR `id[icon: label]` (bracket style)**
 10. **Icons appear in upper right corner as decorators**
 11. **3,400+ icons via fuzzy matching: use `aws-lambda`, `azure-functions`, `gcp-bigquery`, `fa:fa-globe`, emoji, or any tech name**
