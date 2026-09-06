@@ -229,18 +229,113 @@ function generateDiagramSvg(graphData) {
     const h      = n.height ?? DEFAULT_NODE_H;
     const fill   = n.color        ?? NODE_FILL;
     const stroke = n.outlineColor ?? NODE_STROKE;
-    const label  = esc(clip(String(n.label ?? n.id ?? ''), w - 12));
+    const textColor = n.textColor ?? TEXT_DARK;
+    const shapeType = String(n.shapeType || 'rectangle').toLowerCase();
+    const cx = n.x, cy = n.y, hw = w / 2, hh = h / 2;
 
-    if (n.shapeType === 'diamond') {
-      const cx = n.x, cy = n.y, hw = w / 2, hh = h / 2;
+    const isBpmnEventOrGateway = shapeType.startsWith('bpmn-') && (shapeType.includes('event') || shapeType.includes('gateway'));
+    const labelY = isBpmnEventOrGateway ? (cy + hh + 14) : (cy + 4);
+    const label  = esc(clip(String(n.label ?? n.id ?? ''), isBpmnEventOrGateway ? 120 : (w - 12)));
+
+    // Diamond / Rhombus
+    if (shapeType === 'diamond' || shapeType === 'flowchart-decision' || shapeType.startsWith('bpmn-gateway') || shapeType.startsWith('uml-decision') || shapeType === 'uml-junction' || shapeType === 'uml-choice') {
       parts.push(
         `<polygon points="${cx},${cy - hh} ${cx + hw},${cy} ${cx},${cy + hh} ${cx - hw},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
-        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${n.textColor ?? TEXT_DARK}">${label}</text>`,
+        `<text x="${cx}" y="${labelY}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
       );
-    } else {
+    }
+    // Double Circle
+    else if (shapeType === 'flowchart-double-circle' || shapeType === 'bpmn-end-event' || shapeType === 'bpmn-terminate-event' || shapeType === 'uml-final-state' || shapeType === 'uml-flow-final') {
       parts.push(
-        `<rect x="${n.x - w / 2}" y="${n.y - h / 2}" width="${w}" height="${h}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
-        `<text x="${n.x}" y="${n.y + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="${n.textColor ?? TEXT_DARK}">${label}</text>`,
+        `<ellipse cx="${cx}" cy="${cy}" rx="${hw}" ry="${hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<ellipse cx="${cx}" cy="${cy}" rx="${Math.max(2, hw - 4)}" ry="${Math.max(2, hh - 4)}" fill="none" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${labelY}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Circle / Ellipse
+    else if (shapeType === 'circle' || shapeType === 'ellipse' || shapeType === 'flowchart-circle' || shapeType.startsWith('bpmn-') && shapeType.includes('event') || shapeType.startsWith('uml-') && (shapeType.includes('state') || shapeType.includes('point') || shapeType.includes('socket')) || shapeType === 'drop' || shapeType === 'organic-bubble') {
+      parts.push(
+        `<ellipse cx="${cx}" cy="${cy}" rx="${hw}" ry="${hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${labelY}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Cylinder
+    else if (shapeType === 'cylinder' || shapeType.startsWith('flowchart-cylinder') || shapeType.includes('storage') || shapeType === 'bpmn-data-store' || shapeType === 'uml-database' || shapeType === 'uml-datastore') {
+      const capH = Math.min(12, hh * 0.5);
+      parts.push(
+        `<path d="M${cx - hw},${cy - hh + capH} L${cx - hw},${cy + hh - capH} A${hw},${capH} 0 0,0 ${cx + hw},${cy + hh - capH} L${cx + hw},${cy - hh + capH} Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<ellipse cx="${cx}" cy="${cy - hh + capH}" rx="${hw}" ry="${capH}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Stadium
+    else if (shapeType === 'stadium' || shapeType === 'flowchart-stadium' || shapeType === 'flowchart-loop-limit') {
+      parts.push(
+        `<rect x="${cx - hw}" y="${cy - hh}" width="${w}" height="${h}" rx="${hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Subroutine
+    else if (shapeType === 'flowchart-subroutine' || shapeType === 'bpmn-subprocess' || shapeType === 'bpmn-call-activity' || shapeType === 'uml-component') {
+      parts.push(
+        `<rect x="${cx - hw}" y="${cy - hh}" width="${w}" height="${h}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<line x1="${cx - hw + 8}" y1="${cy - hh}" x2="${cx - hw + 8}" y2="${cy + hh}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<line x1="${cx + hw - 8}" y1="${cy - hh}" x2="${cx + hw - 8}" y2="${cy + hh}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Hexagon
+    else if (shapeType === 'hexagon' || shapeType === 'flowchart-hexagon' || shapeType === 'octagon') {
+      const indent = hh * 0.5;
+      parts.push(
+        `<polygon points="${cx - hw + indent},${cy - hh} ${cx + hw - indent},${cy - hh} ${cx + hw},${cy} ${cx + hw - indent},${cy + hh} ${cx - hw + indent},${cy + hh} ${cx - hw},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Parallelogram
+    else if (shapeType === 'parallelogram' || shapeType === 'flowchart-parallelogram' || shapeType === 'flowchart-manual-input') {
+      const skew = Math.min(16, hw * 0.3);
+      parts.push(
+        `<polygon points="${cx - hw + skew},${cy - hh} ${cx + hw},${cy - hh} ${cx + hw - skew},${cy + hh} ${cx - hw},${cy + hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Parallelogram Alt
+    else if (shapeType === 'flowchart-parallelogram-alt') {
+      const skew = Math.min(16, hw * 0.3);
+      parts.push(
+        `<polygon points="${cx - hw},${cy - hh} ${cx + hw - skew},${cy - hh} ${cx + hw},${cy + hh} ${cx - hw + skew},${cy + hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Trapezoid
+    else if (shapeType === 'trapezoid' || shapeType === 'flowchart-trapezoid') {
+      const inset = Math.min(16, hw * 0.25);
+      parts.push(
+        `<polygon points="${cx - hw + inset},${cy - hh} ${cx + hw - inset},${cy - hh} ${cx + hw},${cy + hh} ${cx - hw},${cy + hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Inverted Trapezoid
+    else if (shapeType === 'flowchart-inv-trapezoid') {
+      const inset = Math.min(16, hw * 0.25);
+      parts.push(
+        `<polygon points="${cx - hw},${cy - hh} ${cx + hw},${cy - hh} ${cx + hw - inset},${cy + hh} ${cx - hw + inset},${cy + hh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Rounded-rect / BPMN Task / UML Action / State
+    else if (shapeType === 'rounded-rect' || shapeType === 'flowchart-rounded' || shapeType.startsWith('bpmn-task') || shapeType.endsWith('-task') || shapeType.startsWith('uml-action') || shapeType === 'uml-state' || shapeType === 'uml-use-case') {
+      parts.push(
+        `<rect x="${cx - hw}" y="${cy - hh}" width="${w}" height="${h}" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="${textColor}">${label}</text>`,
+      );
+    }
+    // Default Rectangle
+    else {
+      parts.push(
+        `<rect x="${cx - hw}" y="${cy - hh}" width="${w}" height="${h}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
+        `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="${textColor}">${label}</text>`,
       );
     }
   }

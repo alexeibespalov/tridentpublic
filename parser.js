@@ -381,6 +381,12 @@ export class Trident2DParserV2 {
         const size = afterBrackets.match(/size:([\d.]+)/)?.[1];
         const nodeWidthMatch = afterBrackets.match(/width:([\d.]+)/);
         const nodeHeightMatch = afterBrackets.match(/height:([\d.]+)/);
+        // Generic shape modifier (e.g. shape:hexagon) — overrides the
+        // bracket-implied shape ([label]=rectangle, {label}=diamond). Unknown
+        // values pass through untouched: the renderer downgrades them to a
+        // rectangle while serialization round-trips the original string, so
+        // documents never break across client versions.
+        const shapeModifier = afterBrackets.match(/(?:^|\s)shape:([\w-]+)/)?.[1];
 
         const position = afterBrackets.match(/at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
         const x = position ? parseFloat(position[1]) : undefined;
@@ -398,7 +404,7 @@ export class Trident2DParserV2 {
             size: size ? parseFloat(size) : undefined,
             width: nodeWidthMatch ? parseFloat(nodeWidthMatch[1]) : undefined,
             height: nodeHeightMatch ? parseFloat(nodeHeightMatch[1]) : undefined,
-            shapeType: shapeType,
+            shapeType: shapeModifier || shapeType,
             x,
             y,
             positioned,
@@ -656,6 +662,9 @@ export class Trident2DParserV2 {
         const textColor = afterBrackets.match(/textColor:(#[0-9A-Fa-f]{3,6})/)?.[1];
         const outlineColor = afterBrackets.match(/outlineColor:(#[0-9A-Fa-f]{3,6})/)?.[1];
         const size = afterBrackets.match(/size:([\d.]+)/)?.[1];
+        // Generic shape modifier — overrides the bracket-implied shape and
+        // passes unknown values through (see parseNode).
+        const shapeModifier = afterBrackets.match(/(?:^|\s)shape:([\w-]+)/)?.[1];
 
         const position = afterBrackets.match(/at\s+\(([-\d.]+),\s*([-\d.]+)\)/);
         const x = position ? parseFloat(position[1]) : undefined;
@@ -671,7 +680,7 @@ export class Trident2DParserV2 {
             textColor,
             outlineColor,
             size: size ? parseFloat(size) : undefined,
-            shapeType: bracketShapeType,
+            shapeType: shapeModifier || bracketShapeType,
             x,
             y,
             positioned,

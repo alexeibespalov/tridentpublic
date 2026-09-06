@@ -68,6 +68,14 @@ function serializeNode(node) {
 
     parts[0] += `${bracketOpen}${label}${bracketClose}`;
 
+    // Registry shapes beyond the bracket-implied rectangle/diamond ride on the
+    // shape: modifier. Older parsers ignore unknown modifiers and render a
+    // rectangle — documents downgrade visually but never break, and the string
+    // round-trips untouched for newer clients.
+    if (node.shapeType && node.shapeType !== 'rectangle' && node.shapeType !== 'diamond') {
+        parts.push(`shape:${node.shapeType}`);
+    }
+
     if (node.container) parts.push(`in ${node.container}`);
     if (node.positioned && isFiniteNumber(node.x) && isFiniteNumber(node.y)) {
         parts.push(`at (${formatNumber(node.x)}, ${formatNumber(node.y)})`);

@@ -307,6 +307,14 @@ endpoint[API] in backend at (300, 180) color:#4CAF50
 **Supported Shapes (2D):**
 - **Rectangle** `[]` - Default shape for most nodes
 - **Diamond** `{}` - For decisions, conditionals, or branching logic
+- **Shape collections** via the `shape:` modifier — e.g. `node gw[Approve?] shape:bpmn-exclusive-gateway` or `node db[PostgreSQL] shape:cylinder`.
+  Trident supports 5 curated shape collections:
+  1. **Flowchart** (`flowchart-*`): `flowchart-process`, `flowchart-rounded`, `flowchart-stadium`, `flowchart-subroutine`, `flowchart-cylinder`, `flowchart-circle`, `flowchart-double-circle`, `flowchart-decision`, `flowchart-hexagon`, `flowchart-asymmetric`, `flowchart-parallelogram`, `flowchart-parallelogram-alt`, `flowchart-trapezoid`, `flowchart-inv-trapezoid`, `flowchart-document`, `flowchart-multi-document`, `flowchart-stored-data`, `flowchart-internal-storage`, `flowchart-disk-storage`, `flowchart-direct-access-storage`, `flowchart-manual-input`, `flowchart-display`, `flowchart-delay`, `flowchart-collate`, `flowchart-card`, `flowchart-loop-limit`, `flowchart-summary`, `flowchart-paper-tape`, `flowchart-junction`, `flowchart-off-page`, `flowchart-divided-process`, `flowchart-multi-process`, `flowchart-browser`, `flowchart-folder`, `flowchart-bang`, `flowchart-person`
+  2. **BPMN** (`bpmn-*`): Standard BPMN 2.0 notation (`bpmn-start-event`, `bpmn-end-event`, `bpmn-intermediate-event`, `bpmn-timer-event`, `bpmn-message-event`, `bpmn-error-event`, `bpmn-escalation-event`, `bpmn-signal-event`, `bpmn-terminate-event`, `bpmn-multiple-event`, `bpmn-gateway`, `bpmn-exclusive-gateway`, `bpmn-parallel-gateway`, `bpmn-inclusive-gateway`, `bpmn-complex-gateway`, `bpmn-event-gateway`, `bpmn-task`, `bpmn-user-task`, `bpmn-script-task`, `bpmn-service-task`, `bpmn-business-rule-task`, `bpmn-subprocess`, `bpmn-call-activity`, `bpmn-transaction`, `bpmn-receive-task`, `bpmn-send-task`, `bpmn-message`, `bpmn-data-object`, `bpmn-data-store`, `bpmn-text-annotation`). BPMN events and gateways render their labels underneath the glyph.
+  3. **UML** (`uml-*`): Standard OMG UML 2.5 notation (`uml-class`, `uml-active-class`, `uml-datatype`, `uml-object`, `uml-interface`, `uml-socket`, `uml-port`, `uml-package`, `uml-component`, `uml-node`, `uml-device`, `uml-artifact`, `uml-database`, `uml-actor`, `uml-use-case`, `uml-collaboration`, `uml-boundary`, `uml-control`, `uml-entity`, `uml-state`, `uml-initial-state`, `uml-final-state`, `uml-history-state`, `uml-deep-history`, `uml-entry-point`, `uml-exit-point`, `uml-junction`, `uml-choice`, `uml-terminate`, `uml-action`, `uml-decision`, `uml-fork-join`, `uml-flow-final`, `uml-send-signal`, `uml-receive-signal`, `uml-time-event`, `uml-pin`, `uml-datastore`, `uml-expansion-region`, `uml-frame`, `uml-execution`, `uml-lifeline`, `uml-note`)
+  4. **General primitives**: `rectangle`, `diamond`, `ellipse`, `circle`, `hexagon`, `octagon`, `pentagon`, `triangle`, `parallelogram`, `trapezoid`, `cylinder`, `rounded-rect`
+  5. **Organic**: `cloud`, `star`, `heart`, `document`, `bolt`, `drop`
+  Unknown shape names render as a rectangle without breaking the document.
 
 **Icon Library:**
 Trident includes over **3,400+ built-in icons** for major cloud providers and technologies.
@@ -747,11 +755,19 @@ click C callback "PostgreSQL database"
   - `orthogonal` - Right-angle paths
 
 ### Shape Rules  
-- Node shapes are determined by **bracket syntax only**
 - `[label]` creates **rectangle** nodes (default for most use cases)
 - `{label}` creates **diamond** nodes (for decisions and conditionals)
-- Shape affects visual appearance and hitbox
-- Diamond nodes are commonly used for decision points in flowcharts
+- Any other shape rides on the `shape:` modifier: `node n[Label] shape:<name>`
+  (the modifier overrides the bracket-implied shape)
+- 5 collections available:
+  - **Flowchart**: `flowchart-process`, `flowchart-rounded`, `flowchart-stadium`, `flowchart-subroutine`, `flowchart-cylinder`, `flowchart-circle`, `flowchart-double-circle`, `flowchart-decision`, `flowchart-hexagon`, `flowchart-asymmetric`, `flowchart-parallelogram`, `flowchart-parallelogram-alt`, `flowchart-trapezoid`, `flowchart-inv-trapezoid`, etc.
+  - **BPMN**: `bpmn-start-event`, `bpmn-end-event`, `bpmn-intermediate-event`, `bpmn-gateway`, `bpmn-exclusive-gateway`, `bpmn-task`, `bpmn-user-task`, `bpmn-service-task`, `bpmn-subprocess`, `bpmn-data-store`, etc. Labels render under event/gateway shapes.
+  - **UML**: `uml-class`, `uml-interface`, `uml-package`, `uml-component`, `uml-node`, `uml-database`, `uml-actor`, `uml-use-case`, `uml-state`, `uml-initial-state`, `uml-final-state`, `uml-action`, `uml-decision`, `uml-junction`, etc.
+  - **General**: `rectangle`, `diamond`, `ellipse`, `circle`, `hexagon`, `octagon`, `pentagon`, `triangle`, `parallelogram`, `trapezoid`, `cylinder`, `rounded-rect`
+  - **Organic**: `cloud`, `star`, `heart`, `document`, `bolt`, `drop`
+- Shape affects visual appearance, edge clipping, and hitbox
+- Unknown `shape:` values downgrade to a rectangle visually but round-trip
+  untouched through save/load
 
 ---
 

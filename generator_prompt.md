@@ -359,6 +359,12 @@ node <id>(<icon>)[<label>] in <container> at (<x>, <y>)
 **Shape variants:**
 - `[label]` - Rectangle node (default)
 - `{label}` - Diamond node (for decisions/conditionals)
+- `[label] shape:<name>` - Any registered shape. Trident supports 5 shape collections:
+  - **Flowchart**: `flowchart-process`, `flowchart-rounded`, `flowchart-stadium`, `flowchart-subroutine`, `flowchart-cylinder`, `flowchart-circle`, `flowchart-double-circle`, `flowchart-decision`, `flowchart-hexagon`, `flowchart-asymmetric`, `flowchart-parallelogram`, `flowchart-parallelogram-alt`, `flowchart-trapezoid`, `flowchart-inv-trapezoid`, etc.
+  - **BPMN**: `bpmn-start-event`, `bpmn-end-event`, `bpmn-intermediate-event`, `bpmn-gateway`, `bpmn-exclusive-gateway`, `bpmn-task`, `bpmn-user-task`, `bpmn-service-task`, `bpmn-subprocess`, `bpmn-data-store`, etc. (BPMN events & gateways render labels under shape)
+  - **UML**: `uml-class`, `uml-interface`, `uml-package`, `uml-component`, `uml-node`, `uml-database`, `uml-actor`, `uml-use-case`, `uml-state`, `uml-initial-state`, `uml-final-state`, `uml-action`, `uml-decision`, `uml-junction`, etc.
+  - **General primitives**: `rectangle`, `diamond`, `ellipse`, `circle`, `hexagon`, `octagon`, `pentagon`, `triangle`, `parallelogram`, `trapezoid`, `cylinder`, `rounded-rect`
+  - **Organic**: `cloud`, `star`, `heart`, `document`, `bolt`, `drop`
 
 **Examples:**
 ```trident
