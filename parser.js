@@ -326,6 +326,12 @@ export class Trident2DParserV2 {
         const containerWidth = containerWidthMatch ? parseFloat(containerWidthMatch[1]) : undefined;
         const containerHeight = containerHeightMatch ? parseFloat(containerHeightMatch[1]) : undefined;
 
+        // Optional container kind (e.g. `kind:erd` for flat-table ERD entities).
+        // Only set when present so legacy containers keep their exact object
+        // shape; older parsers ignore the unknown token and render the default
+        // container style.
+        const kind = line.match(/kind:(\w+)/)?.[1];
+
         // Create Container instance with traits
         const container = {
             id,
@@ -338,6 +344,7 @@ export class Trident2DParserV2 {
             positioned,
             width: containerWidth,
             height: containerHeight,
+            ...(kind ? { kind } : {}),
             // Trait properties
             isContainer: true,
             isDraggable: true,
@@ -539,6 +546,24 @@ export class Trident2DParserV2 {
             if (sourcePortMatch && VALID_PORTS[sourcePortMatch[1]]) edge.sourcePort = sourcePortMatch[1];
             const targetPortMatch = afterConnection.match(/targetPort:(\w+)/);
             if (targetPortMatch && VALID_PORTS[targetPortMatch[1]]) edge.targetPort = targetPortMatch[1];
+
+            // Optional connectorType pair — ERD crow's-foot ends, e.g.
+            // `connectorType:one_to_many`. The pair value IS the model type; the
+            // legacy aliases (none_to_arrow / none_to_none) normalize to the
+            // canonical types so old spellings stay canonical. Unambiguous split:
+            // no end token contains `_to_`. Invalid pairs are ignored, same as
+            // invalid port values above.
+            const VALID_ENDS = { none: 1, arrow: 1, one: 1, many: 1, zero_or_one: 1, zero_or_many: 1, one_or_many: 1 };
+            const PAIR_ALIASES = { none_to_arrow: 'arrow', none_to_none: 'line' };
+            const connectorTypeMatch = afterConnection.match(/connectorType:(\w+)/);
+            if (connectorTypeMatch) {
+                const pairValue = connectorTypeMatch[1];
+                const ends = pairValue.split('_to_');
+                if (ends.length === 2 && VALID_ENDS[ends[0]] && VALID_ENDS[ends[1]]) {
+                    edge.type = PAIR_ALIASES[pairValue] || pairValue;
+                    edge.isAnimatable = edge.type.includes('arrow');
+                }
+            }
 
             this.edges.push(edge);
             return edge;
@@ -1074,6 +1099,9 @@ export class Trident2DParserV2 {
             positioned: c.positioned,
             width: c.width,
             height: c.height,
+            // Style discriminator (kind:erd) — only carried when present so legacy
+            // containers keep their exact object shape.
+            ...(c.kind ? { kind: c.kind } : {}),
             isContainer: true,
             isDraggable: true,
             isSelectable: true,

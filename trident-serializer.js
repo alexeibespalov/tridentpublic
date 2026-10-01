@@ -14,6 +14,23 @@ const EDGE_TYPE_TO_CONNECTOR = {
     wave: '~~>'
 };
 
+// connectorType pair support (ERD crow's-foot ends). Mirrors EdgeStyle in
+// graph-classes.js — this file is vendored standalone into collab-worker and
+// functions, so the small vocabulary is intentionally duplicated here.
+const CONNECTOR_TYPE_END_VALUES = ['none', 'arrow', 'one', 'many', 'zero_or_one', 'zero_or_many', 'one_or_many'];
+const CONNECTOR_TYPE_ALIASES = {
+    none_to_arrow: 'arrow',
+    none_to_none: 'line'
+};
+
+function parsePairType(value) {
+    if (typeof value !== 'string') return null;
+    const parts = value.split('_to_');
+    if (parts.length !== 2) return null;
+    if (!CONNECTOR_TYPE_END_VALUES.includes(parts[0]) || !CONNECTOR_TYPE_END_VALUES.includes(parts[1])) return null;
+    return { source: parts[0], target: parts[1] };
+}
+
 function hasOwnValue(object, key) {
     return Object.prototype.hasOwnProperty.call(object, key) && object[key] !== undefined;
 }
@@ -43,6 +60,9 @@ function quoteText(value) {
 function serializeContainer(container) {
     const parts = [`container ${container.id}`];
 
+    // Style discriminator (e.g. kind:erd) rides early on the line, mirroring how
+    // shape: rides on node lines. Older parsers ignore unknown properties.
+    if (container.kind) parts.push(`kind:${container.kind}`);
     if (container.label) parts.push(`label:"${container.label}"`);
     if (container.color) parts.push(`color:${container.color}`);
     if (container.textColor) parts.push(`textColor:${container.textColor}`);
@@ -91,7 +111,13 @@ function serializeNode(node) {
 }
 
 function serializeEdge(edge) {
-    const connector = EDGE_TYPE_TO_CONNECTOR[edge.type] || '-->';
+    // Pair types (e.g. one_to_many) serialize as the plain line token plus a
+    // connectorType attribute; alias pairs (none_to_arrow / none_to_none) fall
+    // back to their canonical legacy token so old charts serialize unchanged.
+    const pairEnds = parsePairType(edge.type);
+    const aliasType = pairEnds ? CONNECTOR_TYPE_ALIASES[edge.type] : null;
+    const isStoredPair = !!pairEnds && !aliasType;
+    const connector = isStoredPair ? '--' : (EDGE_TYPE_TO_CONNECTOR[aliasType || edge.type] || '-->');
     const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
     const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
     let line = `${sourceId} ${connector} ${targetId}`;
@@ -108,6 +134,8 @@ function serializeEdge(edge) {
     // Optional human-set orthogonal ports (drag-authored, editor-only feature).
     if (edge.sourcePort) line += ` sourcePort:${edge.sourcePort}`;
     if (edge.targetPort) line += ` targetPort:${edge.targetPort}`;
+    // ERD crow's-foot pair — emitted last, after the orthogonal port attributes.
+    if (isStoredPair) line += ` connectorType:${edge.type}`;
 
     return line;
 }
