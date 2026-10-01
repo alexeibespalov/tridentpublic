@@ -331,11 +331,13 @@ export class Trident2DParserV2 {
         // shape; older parsers ignore the unknown token and render the default
         // container style.
         const kind = line.match(/kind:(\w+)/)?.[1];
+        // ERD tables default to a white body (the generic grey reads as a group box).
+        const resolvedColor = (kind === 'erd' && !/(?:^|\s)color:/.test(line)) ? '#FFFFFF' : color;
 
         // Create Container instance with traits
         const container = {
             id,
-            color,
+            color: resolvedColor,
             textColor,
             outlineColor,
             label,
@@ -1116,6 +1118,34 @@ export class Trident2DParserV2 {
                 nodeWithCard.card = this.nodeCards.get(node.id);
             }
             return nodeWithCard;
+        });
+
+        // ERD entities (kind:erd) are tables: a 28-unit header band over 24-unit
+        // field rows, one row per child node in source order. Authors (and AI
+        // agents) only list the fields; when the table or any row is missing its
+        // geometry, lay the whole table out here so it is never left to the
+        // generic container auto-placement. `at` is the centre of the table.
+        const ERD_HEADER_H = 28, ERD_ROW_H = 24, ERD_DEFAULT_W = 220;
+        const isNum = v => typeof v === 'number' && Number.isFinite(v);
+        containers.forEach(entity => {
+            if (entity.kind !== 'erd' || !entity.positioned || !isNum(entity.x) || !isNum(entity.y)) return;
+            const rows = nodes.filter(n => n.container === entity.id);
+            const complete = isNum(entity.width) && isNum(entity.height) &&
+                rows.every(r => r.positioned && isNum(r.x) && isNum(r.y) && isNum(r.width) && isNum(r.height));
+            if (complete) return;
+
+            const width = isNum(entity.width) ? entity.width : ERD_DEFAULT_W;
+            const height = ERD_HEADER_H + ERD_ROW_H * Math.max(rows.length, 1);
+            entity.width = width;
+            entity.height = height;
+            const top = entity.y - height / 2;
+            rows.forEach((row, i) => {
+                row.x = entity.x;
+                row.y = top + ERD_HEADER_H + ERD_ROW_H * (i + 0.5);
+                row.width = width;
+                row.height = ERD_ROW_H;
+                row.positioned = true;
+            });
         });
 
         // NOTE: Standalone nodes without `at (x, y)` are intentionally allowed.

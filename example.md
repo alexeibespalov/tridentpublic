@@ -173,3 +173,47 @@ accept --> |No| reject_end
 pack --> dispatch
 dispatch --> delivered
 ```
+
+---
+
+## Example 7: ERD — Blog Database Schema
+
+ERD tables are `kind:erd` containers; each node inside is a field row and takes **no** coordinates. Relationships join tables with `connectorType:`.
+
+```trident
+%% Blog database schema (ERD)
+
+container users kind:erd label:"users" at (160, 200)
+node users_id[🔑 id] in users
+node users_email[email] in users
+node users_name[name] in users
+node users_created_at[created_at] in users
+
+container posts kind:erd label:"posts" at (500, 200)
+node posts_id[🔑 id] in posts
+node posts_author_id[🔗 author_id] in posts
+node posts_title[title] in posts
+node posts_body[body] in posts
+node posts_published_at[published_at] in posts
+
+container comments kind:erd label:"comments" at (840, 200)
+node comments_id[🔑 id] in comments
+node comments_post_id[🔗 post_id] in comments
+node comments_author_name[author_name] in comments
+node comments_body[body] in comments
+
+container post_tags kind:erd label:"post_tags" at (500, 500)
+node post_tags_id[🔑 id] in post_tags
+node post_tags_post_id[🔗 post_id] in post_tags
+node post_tags_tag_id[🔗 tag_id] in post_tags
+
+container tags kind:erd label:"tags" at (840, 500)
+node tags_id[🔑 id] in tags
+node tags_name[name] in tags
+node tags_slug[slug] in tags
+
+users -- |writes| posts connectorType:one_to_zero_or_many
+posts -- |has| comments connectorType:one_to_zero_or_many
+posts -- |tagged by| post_tags connectorType:one_to_zero_or_many
+tags -- |applied in| post_tags connectorType:one_to_zero_or_many
+```

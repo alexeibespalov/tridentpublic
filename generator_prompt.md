@@ -49,6 +49,13 @@ text <id> "Notes" at (<x>, <y>) width:200 style:textBody fontSize:11 bold:true
 <source> --> |Label| <target> routingMode:orthogonal
 <source> --> |Label| <target> routingMode:bezier
 
+%% ERD: a table is a container with kind:erd; each node inside is one field row.
+%% Rows get NO coordinates, shapes, icons or colors. Relationships join TABLES.
+container <table> kind:erd label:"<table name>" at (<x>, <y>)
+node <table>_<field>[🔑 id] in <table>
+node <table>_<field>[🔗 other_id] in <table>
+<table_a> -- |verb| <table_b> connectorType:one_to_many
+
 %% Cards / tooltips (info panels on click)
 click <nodeId> callback "Markdown description or technical spec"
 
@@ -109,6 +116,15 @@ Analyze the user's prompt to determine the diagram domain and apply the correspo
   - **Bottom tier (Databases / Cache / Object Storage):** $Y = 440 - 480$
 - **Visual Groupings:** Use containers (`container frontend`, `container backend`, `container data`).
 - **Icons:** Use fuzzy cloud icons (`webapp[react: Web App]`, `api[server: REST API]`, `db[postgres: PostgreSQL]`, `cache[redis: Redis]`).
+
+### 5. ERD / Database Schema / Data Model
+**Keywords:** `ERD`, `entity relationship`, `database schema`, `data model`, `tables`, `schema design`, `foreign key`, `crow's foot`.
+- **Tables:** one `container <id> kind:erd label:"<table>" at (x, y)` per table. `at` is required and is the table's centre.
+- **Fields:** one `node <table>_<field>[<label>] in <table>` per column, in column order. **Never** give a field row `at (...)`, `width`, `height`, `shape:`, an icon or a color — rows are stacked automatically and the table sizes itself (220 wide, 28 + 24 per row tall).
+- **Keys:** prefix primary keys with `🔑` and foreign keys with `🔗` in the label. Use lowercase snake_case table and field names, and node IDs of the form `<table>_<field>`.
+- **Relationships:** `<table_a> -- |verb| <table_b> connectorType:<a_end>_to_<b_end>`, each end one of `one`, `many`, `zero_or_one`, `zero_or_many`, `one_or_many` (e.g. `one_to_many`, `one_to_zero_or_many`, `many_to_many`). Connect **tables only** — never a field row — and always use the plain `--` connector with `connectorType:`.
+- **Layout Direction:** a grid of tables, about **340** between centres horizontally and **300** vertically; place related tables side by side so lines stay short and do not cross other tables.
+- **Many-to-many:** model it with a join table and two `one_to_many` relationships unless the user asks for a direct `many_to_many`.
 
 ---
 
@@ -199,6 +215,7 @@ When generating C4 Container diagrams:
 4. **Never connect undefined nodes:** Ensure both source and target IDs are defined before referencing them in connections.
 5. **Always use parentheses for coordinates:** `at (100, 200)`, never `at 100, 200`.
 6. **Select appropriate shapes for the diagram type:** Always use `shape:bpmn-*` for BPMN/processes and `shape:flowchart-*` for flowcharts!
+7. **ERDs:** use `kind:erd` containers for tables, coordinate-free nodes for fields, and `-- ... connectorType:` between tables. Never connect field rows, and never position them.
 
 ---
 

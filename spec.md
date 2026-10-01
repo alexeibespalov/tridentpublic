@@ -55,6 +55,9 @@ container_property ::= "color:" color_value
                      | "outlineColor:" color_value
                      | "label:" string
                      | "at" "(" number "," number ")"
+                     | "width:" number
+                     | "height:" number
+                     | "kind:" "erd"              (* ERD table — see section 10 *)
 
 (* Node Definition - Full Trident syntax *)
 node_def ::= "node" identifier icon_spec label_spec position_spec ( node_property )* newline
@@ -109,6 +112,9 @@ unlabeled_connector ::= "--"      (* basic line *)
 connection_property ::= "color:" color_value
                       | "style:" identifier
                       | "routingMode:" routing_mode
+                      | "connectorType:" erd_end "_to_" erd_end   (* ERD relationship — see section 10 *)
+
+erd_end ::= "one" | "many" | "zero_or_one" | "zero_or_many" | "one_or_many"
 
 routing_mode ::= "straight" | "bezier" | "orthogonal"
 
@@ -226,6 +232,7 @@ container storage color:#27AE60 label:"Storage" at (500, 250)
 - `color:#RRGGBB` - Background color for the container zone (hex format)
 - `label:"Text"` - Human-readable container name
 - `at (x, y)` - Optional explicit position for the container center
+- `kind:erd` - Makes the container an **ERD table** whose child nodes are field rows (see section 10)
 
 **Rendering:**
 Containers can be rendered as:
@@ -439,6 +446,7 @@ frontend --> |HTTPS| api routingMode:orthogonal
   - `straight` (default) - Direct straight line
   - `bezier` - Smooth curved path using Bezier curves
   - `orthogonal` - Right-angle paths (Manhattan routing)
+- `connectorType:<end>_to_<end>` - ERD relationship markers (crow's foot) on a `--` connection between two ERD tables, e.g. `connectorType:one_to_many` (see section 10)
 
 ---
 
@@ -643,6 +651,66 @@ sequence auth_seq at (450, 300) width:900 height:500 participants:"Browser,API G
 
 ---
 
+### 10. ERD (Entity-Relationship Diagrams)
+
+An ERD is built from **ERD tables** and **relationships between tables**.
+
+**ERD table** — a container with `kind:erd`. It renders as a flat table: the container `label` is the table name in the header band, and every node placed `in` the table is one **field row**, stacked top to bottom in the order written.
+
+**Syntax:**
+```
+container <id> kind:erd label:"<table name>" at (<x>, <y>)
+node <field_id>[<field label>] in <id>
+node <field_id>[<field label>] in <id>
+```
+
+- `at (x, y)` is **required** on the table and is the **centre** of the table.
+- **Do not give field rows coordinates, sizes, shapes, icons or colors.** Rows are laid out automatically: the table is 220 wide (override with `width:N` on the container), with a 28-unit header and 24 units per row, so its height is `28 + 24 × rows`.
+- Mark keys in the field label: `🔑` for a primary key, `🔗` for a foreign key (e.g. `[🔑 id]`, `[🔗 user_id]`). Keep each label to one short line; a type may follow the name (e.g. `[email varchar]`).
+
+**Relationships** connect **table to table** — never a field row. Use the plain `--` connector with a `connectorType:` property that names the marker at each end:
+
+```
+<source_table> -- |<verb>| <target_table> connectorType:<source_end>_to_<target_end>
+```
+
+| End value | Meaning | Marker |
+|-----------|---------|--------|
+| `one` | exactly one | single bar |
+| `many` | many | crow's foot |
+| `zero_or_one` | optional, at most one | circle + bar |
+| `zero_or_many` | optional, any number | circle + crow's foot |
+| `one_or_many` | at least one | bar + crow's foot |
+
+Common pairs: `one_to_one`, `one_to_many`, `one_to_zero_or_many`, `one_to_zero_or_one`, `one_to_one_or_many`, `many_to_many`. The first end belongs to the source table, the second to the target table, so "one user has many orders" is `users -- orders connectorType:one_to_many`.
+
+`connectorType:` connections are always solid lines; do not combine them with `==`, `..->`, `~~>` or an arrow connector. `routingMode:orthogonal` may be added.
+
+**Example:**
+```trident
+container users kind:erd label:"users" at (160, 200)
+node users_id[🔑 id] in users
+node users_email[email] in users
+node users_name[name] in users
+
+container orders kind:erd label:"orders" at (500, 200)
+node orders_id[🔑 id] in orders
+node orders_user_id[🔗 user_id] in orders
+node orders_total[total] in orders
+
+container order_items kind:erd label:"order_items" at (840, 200)
+node order_items_id[🔑 id] in order_items
+node order_items_order_id[🔗 order_id] in order_items
+node order_items_qty[quantity] in order_items
+
+users -- |places| orders connectorType:one_to_zero_or_many
+orders -- |contains| order_items connectorType:one_to_one_or_many
+```
+
+**Layout:** place tables on a grid — about 340 units between table centres horizontally, and about 300 vertically (more if a table has over 8 fields), so relationship markers and labels have room. Put related tables next to each other so relationship lines do not cross other tables.
+
+---
+
 ## Bracket-Style Syntax
 
 Trident uses bracket notation for clean, readable diagrams:
@@ -729,6 +797,7 @@ click C callback "PostgreSQL database"
 - Container colors use hex format: `#RRGGBB` or `#RGB`
 - Containers are visual groupings, not spatial constraints
 - Containers auto-size around their member nodes when no explicit `width`/`height` is set
+- `kind:erd` containers are ERD tables: they require `at (x, y)`, their member nodes are field rows laid out automatically, and their height follows the row count
 
 ### Node Rules
 - Node identifiers must be unique within diagram
@@ -745,6 +814,8 @@ click C callback "PostgreSQL database"
   - Node to Container
   - Container to Node
   - Container to Container
+- A field row of an ERD table (`kind:erd`) is **never** a connection endpoint — connect the tables
+- ERD relationships use `--` plus `connectorType:<end>_to_<end>`; they are solid lines only
 - Arrow connectors (`-->`, `==>`, `..->`, `.->`) support animated flow
 - Labels support TWO syntaxes: pipe `--> |Label|` or embedded `--Label-->`
 - Both label syntaxes are equivalent and produce identical results
