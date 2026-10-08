@@ -26,18 +26,19 @@ export class Trident2DParserV2 {
     async parse(diagramText) {
         this.errors = [];
 
-        // Check if this is pure Mermaid markup
-        const trimmedText = diagramText.trim();
-        const isPureMermaid = this.isPureMermaidDiagram(trimmedText);
+        // Check if this is pure Mermaid markup (possibly pasted with a
+        // ```mermaid fence or a bare `mermaid` first line)
+        const mermaidSource = this.unwrapMermaidSource(diagramText);
+        const isPureMermaid = this.isPureMermaidDiagram(mermaidSource);
 
         if (isPureMermaid) {
             console.log('Detected pure Mermaid diagram');
             // Set global flag for renderer to know about pure Mermaid mode
             window._isPureMermaidMode = true;
-            window._pureMermaidOriginal = diagramText;
+            window._pureMermaidOriginal = mermaidSource;
 
             // Process as pure Mermaid
-            return await this.parsePureMermaid(diagramText);
+            return await this.parsePureMermaid(mermaidSource);
         }
 
         // Reset pure Mermaid mode if not pure Mermaid
@@ -282,19 +283,7 @@ export class Trident2DParserV2 {
                         containerId: block.containerId
                     });
 
-                    for (const node of layoutResult.nodes) {
-                        this.nodes.set(node.id, node);
-                    }
-
-                    for (const link of layoutResult.links) {
-                        this.edges.push(link);
-                    }
-
-                    if (layoutResult.annotations && layoutResult.annotations.length > 0) {
-                        for (const annotation of layoutResult.annotations) {
-                            this.annotations.push(annotation);
-                        }
-                    }
+                    this.mergeMermaidLayout(layoutResult);
                 } catch (error) {
                     console.error(`Error processing Mermaid block ${block.id}:`, error);
                     this.errors.push(`Mermaid block error: ${error.message}`);
@@ -989,9 +978,50 @@ export class Trident2DParserV2 {
         return graphic;
     }
 
+    // Mermaid copied out of Markdown arrives wrapped: either a full
+    // ```mermaid … ``` fence, or just the fence's info string left on the
+    // first line (`mermaid`). Strip either so the body can be detected and
+    // handed to Mermaid. Inline blocks (`mermaid <id> at (x, y) {`) are left alone.
+    unwrapMermaidSource(text) {
+        let source = String(text || '').trim();
+        const fenced = source.match(/^(`{3,}|~{3,})\s*mermaid[^\n]*\n([\s\S]*?)\n?\1\s*$/i);
+        if (fenced) return fenced[2].trim();
+        source = source.replace(/^(`{3,}|~{3,})\s*mermaid[^\n]*\n/i, '').replace(/\n(`{3,}|~{3,})\s*$/, '');
+        return source.replace(/^mermaid[ \t]*\r?\n/i, '').trim();
+    }
+
+    // Editor paste rules (applied only to pastes, never to typing):
+    //  - A Mermaid document is marked by a `mermaid` header line, the way a
+    //    Trident document is marked by `trident`. When the text after a paste
+    //    is a Mermaid diagram (pasted with a `mermaid` line, a ```mermaid
+    //    fence, or no header at all), it becomes `mermaid` + the diagram,
+    //    replacing the new-document `trident` header.
+    //  - Pasting a Trident document (with its own `trident` header) into the
+    //    editor's pre-filled `trident` leaves a duplicate header; keep only
+    //    the first.
+    // Anything else is returned unchanged.
+    normalizePastedMarkup(text) {
+        const original = String(text ?? '');
+        const withoutTridentHeader = original.trim().replace(/^trident[ \t]*\r?\n/i, '');
+        const body = this.unwrapMermaidSource(withoutTridentHeader);
+        if (this.isPureMermaidDiagram(body)) return `mermaid\n${body}\n`;
+
+        const lines = original.split('\n');
+        const firstHeader = lines.findIndex(line => line.trim() !== '');
+        if (firstHeader === -1 || !/^trident\s*$/i.test(lines[firstHeader])) return original;
+        const deduped = lines.filter((line, index) => index <= firstHeader || !/^trident\s*$/i.test(line));
+        // Collapse the blank run a removed header leaves behind
+        return deduped.join('\n').replace(/\n{3,}/g, '\n\n');
+    }
+
     isPureMermaidDiagram(text) {
+        // Skip a leading YAML frontmatter block, %%{init}%% directives and %% comments
+        const body = String(text || '')
+            .replace(/^\s*---\r?\n[\s\S]*?\r?\n---\s*\r?\n/, '')
+            .replace(/^(\s*%%[^\n]*\n)+/, '');
         const mermaidStartPatterns = [
-            /^\s*(graph|flowchart)\s+(TD|TB|BT|LR|RL)/i,
+            /^\s*(graph|flowchart|flowchart-elk)(\s+(TD|TB|BT|LR|RL))?\s*(\n|$)/i,
+            /^\s*swimlane-beta/i,
             /^\s*sequenceDiagram/i,
             /^\s*classDiagram/i,
             /^\s*stateDiagram/i,
@@ -1006,7 +1036,7 @@ export class Trident2DParserV2 {
             /^\s*requirementDiagram/i,
             /^\s*C4Context/i
         ];
-        return mermaidStartPatterns.some(pattern => pattern.test(text));
+        return mermaidStartPatterns.some(pattern => pattern.test(body));
     }
 
     async parsePureMermaid(mermaidCode) {
@@ -1021,34 +1051,7 @@ export class Trident2DParserV2 {
                     containerId: null
                 });
 
-                for (const node of layoutResult.nodes) {
-                    this.nodes.set(node.id, node);
-                }
-
-                for (const link of layoutResult.links) {
-                    this.edges.push(link);
-                }
-
-                if (layoutResult.subgraphs) {
-                    for (const subgraph of layoutResult.subgraphs) {
-                        const container = {
-                            id: subgraph.id,
-                            label: subgraph.label || subgraph.id,
-                            x: subgraph.x || 0,
-                            y: subgraph.y || 0,
-                            width: subgraph.width || 200,
-                            height: subgraph.height || 200,
-                            color: 'rgba(255, 255, 255, 0.1)', // Subtle background
-                            outlineColor: '#333333',
-                            textColor: '#333333',
-                            positioned: true,
-                            isContainer: true,
-                            // Store original node membership for potential future use
-                            memberNodes: subgraph.nodes
-                        };
-                        this.containers.set(container.id, container);
-                    }
-                }
+                this.mergeMermaidLayout(layoutResult);
 
                 console.log(`Pure Mermaid: Added ${layoutResult.nodes.length} nodes, ${layoutResult.links.length} links` +
                     (layoutResult.subgraphs ? `, and ${layoutResult.subgraphs.length} subgraphs` : ''));
@@ -1061,6 +1064,35 @@ export class Trident2DParserV2 {
         }
 
         return this.toGraphData();
+    }
+
+    // Merge an extractMermaidLayout() result into this parse. New importers
+    // return Trident-shaped containers/annotations/canvasGraphics; the legacy
+    // extractor returns `subgraphs` with top-left geometry.
+    mergeMermaidLayout(layoutResult) {
+        for (const node of layoutResult.nodes || []) this.nodes.set(node.id, node);
+        for (const link of layoutResult.links || []) this.edges.push(link);
+        for (const container of layoutResult.containers || []) this.containers.set(container.id, container);
+        for (const annotation of layoutResult.annotations || []) this.annotations.push(annotation);
+        for (const graphic of layoutResult.canvasGraphics || []) this.canvasGraphics.push(graphic);
+
+        for (const subgraph of layoutResult.subgraphs || []) {
+            if (this.containers.has(subgraph.id)) continue;
+            this.containers.set(subgraph.id, {
+                id: subgraph.id,
+                label: subgraph.label || subgraph.id,
+                x: subgraph.x || 0,
+                y: subgraph.y || 0,
+                width: subgraph.width || 200,
+                height: subgraph.height || 200,
+                color: 'rgba(255, 255, 255, 0.1)',
+                outlineColor: '#333333',
+                textColor: '#333333',
+                positioned: true,
+                isContainer: true,
+                memberNodes: subgraph.nodes
+            });
+        }
     }
 
     parseMermaidBlock(blockText) {
