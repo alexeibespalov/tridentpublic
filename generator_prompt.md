@@ -154,7 +154,7 @@ Trident uses standard 2D canvas coordinates `(x, y)`:
 ### Spacing Guidelines:
 - **Horizontal node spacing:** Place connected nodes 120–180 units apart on the X axis.
 - **Vertical tier spacing:** For multi-tier diagrams, leave 160–200 units between tiers.
-- **Containers:** When nodes belong to a container (`in <container>`), position the nodes within that container's visual area.
+- **Containers:** When nodes belong to a container (`in <container>`), position the nodes within that container's visual area. If the container has an explicit `width:`/`height:`, every member must fit inside it (edges at x ± width/2, y ± height/2): when you add nodes, enlarge `width`/`height` (or drop them so the container auto-sizes) instead of placing nodes outside.
 
 ---
 

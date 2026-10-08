@@ -232,6 +232,7 @@ container storage color:#27AE60 label:"Storage" at (500, 250)
 - `color:#RRGGBB` - Background color for the container zone (hex format)
 - `label:"Text"` - Human-readable container name
 - `at (x, y)` - Optional explicit position for the container center
+- `width:N` / `height:N` - Optional explicit size (the container is then centred on `at (x, y)`, with edges at x ± width/2 and y ± height/2). Omit both to let the container auto-size around its nodes
 - `kind:erd` - Makes the container an **ERD table** whose child nodes are field rows (see section 10)
 
 **Rendering:**
@@ -797,6 +798,7 @@ click C callback "PostgreSQL database"
 - Container colors use hex format: `#RRGGBB` or `#RGB`
 - Containers are visual groupings, not spatial constraints
 - Containers auto-size around their member nodes when no explicit `width`/`height` is set
+- A container with explicit `width`/`height` is drawn at that size, and only grows on screen if a member node falls outside it. When you add or move nodes into such a container, **enlarge its `width`/`height`** (or remove them) so every member fits with ~40 units of padding — don't rely on the on-screen growth
 - `kind:erd` containers are ERD tables: they require `at (x, y)`, their member nodes are field rows laid out automatically, and their height follows the row count
 
 ### Node Rules
